@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EŞSİZ METAL - Profesyonel Üretim Paneli</title>
+    <style>
+        :root {
+            --metal-gradient: linear-gradient(145deg, #2c3e50, #000000);
+            --accent-blue: #00d2ff;
+            --neon-green: #39ff14;
+            --neon-orange: #ff9f43;
+            --steel-text: #bdc3c7;
+        }
+
+        body { 
+            font-family: 'Orbitron', sans-serif; 
+            background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px; color: var(--steel-text); min-height: 100vh;
+        }
+
+        #ana-baslik {
+            font-size: 3em; color: white; text-shadow: 0 0 20px var(--accent-blue);
+            margin-bottom: 30px; letter-spacing: 5px; font-weight: bold;
+        }
+
+        .dashboard { 
+            display: flex; gap: 15px; flex-wrap: nowrap; justify-content: center; width: 100%; max-width: 1400px; 
+        }
+
+        .card { 
+            background: var(--metal-gradient); padding: 20px; border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 32%; border: 2px solid #444;
+            position: relative; overflow: hidden;
+        }
+
+        .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent-blue); }
+        .card.orange::before { background: var(--neon-orange); }
+
+        h2 { color: var(--accent-blue); text-align: center; font-size: 1.1em; text-transform: uppercase; margin-bottom: 20px; }
+        .orange h2 { color: var(--neon-orange); }
+
+        .input-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.65em; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #333; border-radius: 5px; background: #1a1a1a; color: white; font-size: 0.9em; }
+
+        .results { background: rgba(0, 0, 0, 0.5); border-radius: 10px; padding: 12px; margin-top: 15px; border: 1px solid #222; }
+        .res-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8em; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .val { font-weight: bold; color: white; }
+        .highlight { color: var(--neon-green); font-size: 1.05em; }
+
+        .summary-card {
+            margin-top: 30px; width: 100%; max-width: 1000px;
+            background: var(--metal-gradient); border-radius: 20px; padding: 25px;
+            border: 2px solid #444; box-shadow: 0 15px 40px rgba(0,0,0,0.9);
+        }
+        
+        .summary-header-box { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .print-only { display: none; } /* Normal ekranda gizli */
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: rgba(0,0,0,0.3); }
+        th { background: rgba(0, 210, 255, 0.1); color: var(--accent-blue); padding: 12px; text-align: left; font-size: 0.9em; }
+        td { padding: 10px; border-bottom: 1px solid #222; font-size: 0.9em; }
+
+        .print-btn {
+            background: linear-gradient(145deg, var(--neon-green), #24b30e); color: #000; padding: 15px;
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px; font-family: 'Orbitron';
+        }
+
+        @media print {
+            body { background: white !important; color: black !important; padding: 0; }
+            .dashboard, #ana-baslik, .print-btn, .summary-header-box input { display: none !important; }
+            .print-only { display: block !important; font-size: 1.2em; border-bottom: 2px solid #000; padding: 10px 0; margin-bottom: 10px; }
+            .summary-card { background: white !important; color: black !important; border: none !important; width: 100% !important; padding: 0 !important; }
+            th, td { border: 1px solid #000 !important; color: black !important; }
+            .val, .highlight { color: black !important; }
+            h3 { color: black !important; margin-bottom: 30px !important; }
+        }
+
+        @import url('https://googleapis.com');
+    </style>
+</head>
+<body>
+
+<div id="ana-baslik">EŞSİZ METAL</div>
+
+<div class="dashboard">
+    <!-- 1. SAC AĞIRLIK ANALİZİ -->
+    <div class="card">
+        <h2>⛓ Sac Plaka Analizi</h2>
+        <div class="input-group"><label>Genişlik (mm)</label><input type="number" id="en" oninput="hesapla()"></div>
+        <div class="input-group"><label>Boy (mm)</label><input type="number" id="boy" oninput="hesapla()"></div>
+        <div class="input-group"><label>Kalınlık (mm)</label><input type="number" id="kalinlik" oninput="hesapla()"></div>
+        <div class="input-group"><label>Adet</label><input type="number" id="adet" value="1" oninput="hesapla()"></div>
+        <div class="input-group">
+            <label>Malzeme Özkütlesi</label>
+            <select id="ozkutle" onchange="hesapla()">
+                <option value="7.85">Demir / Çelik (7.85)</option>
+                <option value="2.70">Alüminyum (2.70)</option>
+                <option value="8.00">Paslanmaz Çelik (8.00)</option>
+            </select>
+        </div>
+        <div class="results">
+            <div class="res-item"><span>Tekil Ağırlık:</span><span class="val"><span id="tekilPlaka">0.00</span> kg</span></div>
+            <div class="res-item"><span>Toplam Ağırlık:</span><span class="val highlight"><span id="toplamPlaka">0.00</span> kg</span></div>
+        </div>
+    </div>
+
+    <!-- 2. LAZER KESİM ANALİZİ -->
+    <div class="card">
+        <h2>⚡ Lazer Kesim Analizi</h2>
+        <div class="input-group"><label>Kesim Süresi (Saat)</label><input type="number" id="sure" step="0.01" oninput="hesapla()"></div>
+        <div class="input-group"><label>Hesaplanan Ağırlık (kg)</label><input type="number" id="toplamKg" oninput="hesapla()"></div>
+        <div class="input-group"><label>Saatlik İşçilik Ücreti (TL)</label><input type="number" id="saatlikFiyat" oninput="hesapla()"></div>
+        <div class="input-group"><label>Hammadde kg Fiyatı (TL)</label><input type="number" id="maddeFiyat" oninput="hesapla()"></div>
+        <div class="results">
+            <div class="res-item"><span>İşçilik Bedeli:</span><span class="val" id="isclikSiz">0.00 TL</span></div>
+            <div class="res-item"><span>Birim İşçilik (TL/kg):</span><span class="val" id="kgIscilikSiz">0.00 TL</span></div>
+            <div class="res-item"><span>Maliyetli Toplam:</span><span class="val highlight" id="toplamLi">0.00 TL</span></div>
+            <div class="res-item"><span>Toplam Birim (TL/kg):</span><span class="val highlight" id="kgToplamLi">0.00 TL</span></div>
+        </div>
+    </div>
+
+    <!-- 3. ABKANT BÜKÜM ANALİZİ -->
+    <div class="card orange">
+        <h2>📐 Abkant Büküm Analizi</h2>
+        <div class="input-group"><label>Büküm Süresi / Parça (Dk)</label><input type="number" id="bukumSure" oninput="hesapla()"></div>
+        <div class="input-group"><label>Parça Adeti</label><input type="number" id="bukumAdet" oninput="hesapla()"></div>
+        <div class="input-group"><label>Büküm Saatlik Ücret (TL)</label><input type="number" id="bukumSaatFiyat" oninput="hesapla()"></div>
+        <div class="results">
+            <div class="res-item"><span>Toplam Büküm Süresi:</span><span class="val" id="bukumToplamSure">-</span></div>
+            <div class="res-item"><span>Birim Büküm (TL/kg):</span><span class="val" id="bukumKgFiyat">-</span></div>
+            <div class="res-item"><span>Toplam Büküm Bedeli:</span><span class="val highlight" id="bukumFiyat">0.00 TL</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- TEKLİF FORMU -->
+<div class="summary-card">
+    <h3 style="text-align:center; color:var(--accent-blue); font-family:'Orbitron';">EŞSİZ METAL TEKLİF FORMU</h3>
+    
+    <!-- Ekran Girişi -->
+    <div class="summary-header-box">
+        <input type="text" id="firmaInput" placeholder="MÜŞTERİ FİRMA ADI" oninput="yazdirmaHazirla()">
+        <input type="text" id="projeInput" placeholder="PROJE DETAYI" oninput="yazdirmaHazirla()">
+    </div>
+
+    <!-- Sadece Yazdırmada Görünen Alan -->
+    <div class="print-only">
+        <strong>FİRMA:</strong> <span id="firmaYazisi">................................</span><br>
+        <strong>PROJE:</strong> <span id="projeYazisi">................................</span>
+    </div>
+
+    <table>
+        <thead><tr><th>ÜRETİM KALEMİ</th><th style="text-align:right;">TOPLAM TUTAR</th></tr></thead>
+        <tbody>
+            <tr><td>Lazer Kesim İşçilik Bedeli</td><td style="text-align:right;" id="ozetLazerIscilik">0.00 TL</td></tr>
+            <tr><td>Hammadde Tedarik Bedeli</td><td style="text-align:right;" id="ozetMadde">0.00 TL</td></tr>
+            <tr><td>Abkant Büküm İşçilik Bedeli</td><td style="text-align:right;" id="ozetBukum">0.00 TL</td></tr>
+            <tr style="font-weight:bold; border-top:2px solid var(--accent-blue);">
+                <td style="font-size:1.1em; color:var(--neon-green);">GENEL TOPLAM</td>
+                <td style="text-align:right; font-size:1.1em; color:var(--neon-green);" id="genelToplam">0.00 TL</td>
+            </tr>
+        </tbody>
+    </table>
+    <button class="print-btn" onclick="window.print()">TEKLİFİ YAZDIR / PDF KAYDET</button>
+</div>
+
+<script>
+// Giriş yapılan metinleri yazdırma alanına kopyalayan fonksiyon
+function yazdirmaHazirla() {
+    const firma = document.getElementById('firmaInput').value;
+    const proje = document.getElementById('projeInput').value;
+    
+    document.getElementById('firmaYazisi').innerText = firma || "................................";
+    document.getElementById('projeYazisi').innerText = proje || "................................";
+}
+
+function hesapla() {
+    const en = parseFloat(document.getElementById('en').value) || 0;
+    const boy = parseFloat(document.getElementById('boy').value) || 0;
+    const kal = parseFloat(document.getElementById('kalinlik').value) || 0;
+    const adet = parseFloat(document.getElementById('adet').value) || 0;
+    const ozk = parseFloat(document.getElementById('ozkutle').value);
+    const sacKg = ((en * boy * kal * ozk) / 1000000) * adet;
+    document.getElementById('tekilPlaka').innerText = (sacKg/adet || 0).toFixed(2);
+    document.getElementById('toplamPlaka').innerText = sacKg.toFixed(2);
+
+    const lSaat = parseFloat(document.getElementById('sure').value) || 0;
+    const lKg = parseFloat(document.getElementById('toplamKg').value) || 0;
+    const sFiyat = parseFloat(document.getElementById('saatlikFiyat').value) || 0;
+    const hFiyat = parseFloat(document.getElementById('maddeFiyat').value) || 0;
+    
+    const isclik = lSaat * sFiyat;
+    const madde = hFiyat * lKg;
+    const lazerTop = isclik + madde;
+    
+    document.getElementById('isclikSiz').innerText = isclik.toLocaleString('tr-TR') + " TL";
+    document.getElementById('kgIscilikSiz').innerText = lKg > 0 ? (isclik / lKg).toFixed(2) + " TL" : "0.00 TL";
+    document.getElementById('toplamLi').innerText = lazerTop.toLocaleString('tr-TR') + " TL";
+    document.getElementById('kgToplamLi').innerText = lKg > 0 ? (lazerTop / lKg).toFixed(2) + " TL" : "0.00 TL";
+
+    const bDk = parseFloat(document.getElementById('bukumSure').value) || 0;
+    const bAdet = parseFloat(document.getElementById('bukumAdet').value) || 0;
+    const bSaatFiyat = parseFloat(document.getElementById('bukumSaatFiyat').value) || 0;
+    const topBukumDk = bDk * bAdet;
+    const bukumTop = (topBukumDk / 60) * bSaatFiyat;
+    
+    document.getElementById('bukumToplamSure').innerText = topBukumDk > 0 ? topBukumDk.toFixed(1) + " dk" : "-";
+    document.getElementById('bukumKgFiyat').innerText = (lKg > 0 && bukumTop > 0) ? (bukumTop / lKg).toFixed(2) + " TL" : "-";
+    document.getElementById('bukumFiyat').innerText = bukumTop.toLocaleString('tr-TR') + " TL";
+
+    document.getElementById('ozetLazerIscilik').innerText = isclik.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + " TL";
+    document.getElementById('ozetMadde').innerText = madde.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + " TL";
+    document.getElementById('ozetBukum').innerText = bukumTop.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + " TL";
+    document.getElementById('genelToplam').innerText = (lazerTop + bukumTop).toLocaleString('tr-TR', {minimumFractionDigits: 2}) + " TL";
+}
+</script>
+
+</body>
+</html>
